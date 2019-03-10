@@ -31,3 +31,14 @@ pub mod hash;
 pub mod log;
 #[cfg(feature="url")]
 pub mod url;
+
+#[macro_use]
+extern crate lazy_static;
+
+extern crate reqwest;
+extern crate futures;
+extern crate tokio;
+extern crate serde_json;
+
+#[allow(dead_code)]
+pub mod http;
