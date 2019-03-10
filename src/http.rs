@@ -18,12 +18,17 @@ enum RequestStatus {
     Concluded
 }
 
+enum ResponseState {
+    None,
+    Response(Box<Response>),
+    Errored(reqwest::Error)
+}
+
 struct RequestHolder {
     uid: u64,
     status: RequestStatus,
     request: Option<Request>,
-    response: Option<Response>,
-    error: Option<reqwest::Error>
+    response: ResponseState,
 }
 
 lazy_static! {
@@ -83,8 +88,7 @@ fn _request_init(url: &str, method: &str) -> Result<String> {
         uid: get_uid(),
         status: RequestStatus::UnderConstruction,
         request: Some(HTTP_CLIENT.request(method, url).build().unwrap()),
-        response: None,
-        error: None
+        response: ResponseState::None
     };
 
     let uid_to_return = req.uid;
@@ -106,9 +110,8 @@ fn _request_set_headers(uid: &str, headers: &str) -> Result<String> {
 
         let headers = construct_headers(headers);
 
-        match req.request.as_mut() {
-            Some(r) => *r.headers_mut() = headers,
-            None => {},
+        if let Some(r) = req.request.as_mut() {
+            *r.headers_mut() = headers
         }
 
         Ok("a".to_string())
@@ -125,9 +128,8 @@ fn _request_set_body(uid: &str, body: &str) -> Result<String> {
         let req = req.unwrap();
         let mut req = req.lock().unwrap();
 
-        match req.request.as_mut() {
-            Some(r) => *r.body_mut() = Some(Body::from(body.to_string())),
-            None => {},
+        if let Some(r) = req.request.as_mut() {
+            *r.body_mut() = Some(Body::from(body.to_string()))
         }
 
         Ok("a".to_string())
@@ -154,8 +156,8 @@ fn _request_launch(uid: &str) -> Result<String> {
             .then(move |resp| {
                 let mut req = req_clone.lock().unwrap();
                 match resp {
-                    Ok(r) => req.response = Some(r),
-                    Err(e) => req.error = Some(e),
+                    Ok(r) => req.response = ResponseState::Response(Box::new(r)),
+                    Err(e) => req.response = ResponseState::Errored(e),
                 }
 
                 Ok(())
@@ -205,9 +207,8 @@ fn shutdown_runtime() {
     TOKIO_RT.with(|rt| {
         let rt = rt.replace(None);
 
-        match rt {
-            Some(r) => shutdown_tokio(r),
-            None => {},
+        if let Some(r) = rt {
+            shutdown_tokio(r);
         }
     });
 }
@@ -220,9 +221,8 @@ fn startup_runtime() {
     TOKIO_RT.with(|rt| {
         let rt = rt.replace(Some(setup_tokio_runtime()));
 
-        match rt {
-            Some(r) => shutdown_tokio(r),
-            None => {},
+        if let Some(r) = rt {
+            shutdown_tokio(r)
         }
     });
 }
