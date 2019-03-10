@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::cell::{RefCell, Cell};
 use std::sync::{Arc, Mutex};
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -8,6 +8,7 @@ use reqwest::async::{Client, Response, Request, Body};
 use reqwest::Method;
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use serde_json::{Value};
+use tokio::runtime::Builder;
 
 use error::{Error, Result};
 
@@ -32,13 +33,22 @@ lazy_static! {
 thread_local! {
     static CURR_UID: Cell<u64> = Cell::new(0);
     static REQUESTS_MAP: Arc<Mutex<BTreeMap<u64, Arc<Mutex<RequestHolder>>>>> = Arc::new(Mutex::new(BTreeMap::new()));
-    static RESPONSE_MAP: Arc<Mutex<Vec<Response>>> = Arc::new(Mutex::new(Vec::new()));
+    static TOKIO_RT: RefCell<Option<tokio::runtime::Runtime>> = RefCell::new(None);
 }
 
 fn setup_http_client() -> Client {
     Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build().unwrap()
+}
+
+fn setup_tokio_runtime() -> tokio::runtime::Runtime {
+    Builder::new()
+        .blocking_threads(2)
+        .keep_alive(Some(std::time::Duration::from_secs(60)))
+        .name_prefix("rust-g-http-")
+        .build()
+        .unwrap()
 }
 
 byond_fn! { request_init(url, method) {
@@ -55,6 +65,14 @@ byond_fn! { request_set_body(uid, body) {
 
 byond_fn! { request_launch(uid) {
     _request_launch(uid).ok()
+} }
+
+byond_fn! { http_shutdown() {
+    _http_shutdown().ok()
+} }
+
+byond_fn! { http_startup() {
+    _http_startup().ok()
 } }
 
 fn _request_init(url: &str, method: &str) -> Result<String> {
@@ -143,10 +161,29 @@ fn _request_launch(uid: &str) -> Result<String> {
                 Ok(())
             });
 
-        tokio::run(fut);
+        TOKIO_RT.with(|rt| {
+            let mut rt = rt.borrow_mut();
+            let rt = rt.as_mut();
+
+            rt.unwrap().spawn(fut);
+        });
 
         Ok("a".to_string())
     })
+}
+
+fn _http_shutdown() -> Result<String> {
+    shutdown_runtime();
+
+    reset_uid();
+
+    Ok("memes".to_string())
+}
+
+fn _http_startup() -> Result<String> {
+    startup_runtime();
+
+    Ok("memes".to_string())
 }
 
 fn get_uid() -> u64 {
@@ -156,6 +193,38 @@ fn get_uid() -> u64 {
 
         old
     })
+}
+
+fn reset_uid() {
+    CURR_UID.with(|cell| {
+        cell.set(0);
+    });
+}
+
+fn shutdown_runtime() {
+    TOKIO_RT.with(|rt| {
+        let rt = rt.replace(None);
+
+        match rt {
+            Some(r) => shutdown_tokio(r),
+            None => {},
+        }
+    });
+}
+
+fn shutdown_tokio(rt: tokio::runtime::Runtime) {
+    rt.shutdown_now().wait().unwrap();
+}
+
+fn startup_runtime() {
+    TOKIO_RT.with(|rt| {
+        let rt = rt.replace(Some(setup_tokio_runtime()));
+
+        match rt {
+            Some(r) => shutdown_tokio(r),
+            None => {},
+        }
+    });
 }
 
 fn requests_map_insert(req: RequestHolder) {
