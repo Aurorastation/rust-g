@@ -13,6 +13,8 @@ extern crate hex;
 extern crate percent_encoding;
 #[cfg(feature="png")]
 extern crate png;
+#[cfg(feature="ammonia")]
+extern crate ammonia;
 
 #[macro_use]
 mod byond;
@@ -27,6 +29,8 @@ pub mod file;
 pub mod git;
 #[cfg(feature="hash")]
 pub mod hash;
+#[cfg(feature="html")]
+pub mod html;
 #[cfg(feature="log")]
 pub mod log;
 #[cfg(feature="url")]

@@ -83,4 +83,14 @@ fn main() {
 #endif
 "#).unwrap();
     }
+
+    // module: html
+    if enabled!("HTML") {
+        write!(f, r#"
+#define rustg_clean_html(html) call(RUST_G, "clean_html")(html)
+
+#ifdef RUSTG_OVERRIDE_BUILTINS
+#endif
+"#).unwrap();
+    }
 }
