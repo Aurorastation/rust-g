@@ -1,4 +1,5 @@
 use ammonia::{Builder};
+use url::Url;
 
 byond_fn! { clean_html(data) {
     let clean = Builder::default()
@@ -23,4 +24,25 @@ byond_fn! { clean_html_chat_trusted(data) {
     Some(data)
 } }
 
-fn 
+byond_fn! { clean_html_document(data) {
+    let clean = Builder::default()
+        .clean(data)
+        .attribute_filter(html_attribute_filter)
+        .to_string();
+    Some(data)
+} }
+
+fn html_attribute_filter(element, attribute, value) {
+    match (element, attribute) {
+        ("a", "href") => url_sanitizer(value)
+        _ => Some(value.into())
+    }
+}
+
+fn url_sanitizer(value) {
+    let url = Url:parse(value);
+    match url.host_str(). {
+        ""
+
+    }
+}
