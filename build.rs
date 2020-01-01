@@ -83,4 +83,11 @@ fn main() {
 #endif
 "#).unwrap();
     }
+
+    // module: udp_shipper
+    if enabled!("UDP_SHIPPER") {
+        write!(f, r#"
+#define rustg_udp_shipper_send(addr, text) call(RUST_G, "udp_shipper_send")(addr, text)
+"#).unwrap();
+    }
 }
