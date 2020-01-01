@@ -18,7 +18,6 @@ extern crate png;
 mod byond;
 #[allow(dead_code)]
 mod error;
-mod jobs;
 
 #[cfg(feature="dmi")]
 pub mod dmi;
@@ -32,3 +31,5 @@ pub mod hash;
 pub mod log;
 #[cfg(feature="url")]
 pub mod url;
+#[cfg(feature="udp_shipper")]
+pub mod udp_shipper;
