@@ -83,4 +83,13 @@ fn main() {
 #endif
 "#).unwrap();
     }
+
+    // module: http
+    if enabled!("HTTP") {
+        write!(f, r#"
+#define rustg_http_request_blocking(method, url, body, headers) call(RUST_G, "http_request_blocking")(method, url, body, headers)
+#define rustg_http_request_async(method, url, body, headers) call(RUST_G, "http_request_async")(method, url, body, headers)
+#define rustg_http_check_request(req_id) call(RUST_G, "http_check_request")(req_id)
+"#).unwrap();
+    }
 }
