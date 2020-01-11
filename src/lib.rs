@@ -20,6 +20,9 @@ extern crate reqwest;
 extern crate serde_derive;
 #[cfg(feature="http")]
 extern crate serde_json;
+#[cfg(feature="http")]
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 mod byond;
