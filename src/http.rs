@@ -35,7 +35,10 @@ struct Response {
 byond_fn! { http_request_blocking(method, url, body, headers) {
     let (method, url, body, headers) = sanitize_args(&method, &url, &body, &headers);
 
-    let req = construct_request(method, url, body, headers);
+    let req = match construct_request(method, url, body, headers) {
+        Ok(r) => r,
+        Err(e) => return Some(e.to_string())
+    };
 
     match submit_request(req) {
         Ok(r) => Some(r),
@@ -47,7 +50,10 @@ byond_fn! { http_request_blocking(method, url, body, headers) {
 byond_fn! { http_request_async(method, url, body, headers) {
     let (method, url, body, headers) = sanitize_args(&method, &url, &body, &headers);
 
-    let req = construct_request(method, url, body, headers);
+    let req = match construct_request(method, url, body, headers) {
+        Ok(r) => r,
+        Err(e) => return Some(e.to_string())
+    };
 
     Some(jobs::start(move || {
         match submit_request(req) {
@@ -100,7 +106,7 @@ fn create_response(response: &mut reqwest::Response) -> Result<Response> {
     Ok(resp)
 }
 
-fn construct_request(method: String, url: String, body: Option<String>, headers: Option<String>) -> reqwest::RequestBuilder {
+fn construct_request(method: String, url: String, body: Option<String>, headers: Option<String>) -> Result<reqwest::RequestBuilder> {
     let mut req = match &method[..] {
         "post" => HTTP_CLIENT.post(&url),
         "put" => HTTP_CLIENT.put(&url),
@@ -115,13 +121,13 @@ fn construct_request(method: String, url: String, body: Option<String>, headers:
     }
 
     if let Some(headers) = headers {
-        let headers: BTreeMap<&str, &str> = serde_json::from_str(&headers).unwrap();
+        let headers: BTreeMap<&str, &str> = serde_json::from_str(&headers)?;
         for (key, value) in headers {
             req = req.header(key, value);
         }
     }
 
-    req
+    Ok(req)
 }
 
 fn submit_request(req: reqwest::RequestBuilder) -> Result<String> {
