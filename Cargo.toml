@@ -93,10 +93,16 @@ default = [
 
 all = [
     "acreplace",
+# Aurora special snowflake noise gen
+    "auroranoise",
+# Not default either but we need it
+    "batchnoise",
     "cellularnoise",
     "dmi",
     "file",
     "git",
+# Not included by default, but we use it
+    "hash",
     "http",
     "json",
     "log",
@@ -105,6 +111,8 @@ all = [
     "sql",
     "time",
     "toml",
+# Aurora special nowflake module, because of course we have one
+    "udp",
     "url",
     "batchnoise",
     "hash",
