@@ -27,7 +27,6 @@ fn noise_gen(
         .map(|x| {
             let mut rng = rand::thread_rng();
             (0..height + 3)
-                .into_iter()
                 .map(|y| {
                     if x == 0 || y == 0 || x == width + 2 || y == height + 2 {
                         return false;
@@ -39,12 +38,11 @@ fn noise_gen(
         .collect::<Vec<Vec<bool>>>();
 
     //then we smoothe it
-    (0..smoothing_level).into_iter().for_each(|_| {
+    (0..smoothing_level).for_each(|_| {
         let replace_vec = (0..width + 3)
             .into_par_iter()
             .map(|x| {
                 (0..height + 3)
-                    .into_iter()
                     .map(|y| {
                         if x == 0 || y == 0 || x == width + 2 || y == height + 2 {
                             return false;
@@ -73,11 +71,10 @@ fn noise_gen(
     });
 
     //then we cut it
-    let map = (1..width + 1)
+    let map = (1..=width)
         .into_par_iter()
         .map(|x| {
-            (1..height + 1)
-                .into_iter()
+            (1..=height)
                 .map(|y| filled_vec[x][y])
                 .collect::<Vec<bool>>()
         })

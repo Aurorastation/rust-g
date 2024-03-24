@@ -1,7 +1,9 @@
 use crate::error::{Error, Result};
+use dmi::icon::Icon;
 use png::{Decoder, Encoder, OutputInfo, Reader};
 use std::{
     fs::{create_dir_all, File},
+    io::BufReader,
     path::Path,
 };
 
@@ -25,9 +27,13 @@ byond_fn!(fn dmi_resize_png(path, width, height, resizetype) {
     resize_png(path, width, height, resizetype).err()
 });
 
+byond_fn!(fn dmi_icon_states(path) {
+    read_states(path).ok()
+});
+
 fn strip_metadata(path: &str) -> Result<()> {
     let (reader, frame_info, image) = read_png(path)?;
-    write_png(path, reader, frame_info, image, true)
+    write_png(path, &reader, &frame_info, &image, true)
 }
 
 fn read_png(path: &str) -> Result<(Reader<File>, OutputInfo, Vec<u8>)> {
@@ -40,9 +46,9 @@ fn read_png(path: &str) -> Result<(Reader<File>, OutputInfo, Vec<u8>)> {
 
 fn write_png(
     path: &str,
-    reader: Reader<File>,
-    info: OutputInfo,
-    image: Vec<u8>,
+    reader: &Reader<File>,
+    info: &OutputInfo,
+    image: &[u8],
     strip: bool,
 ) -> Result<()> {
     let mut encoder = Encoder::new(File::create(path)?, info.width, info.height);
@@ -50,8 +56,12 @@ fn write_png(
     encoder.set_depth(info.bit_depth);
 
     let reader_info = reader.info();
-    if let Some(palette) = reader_info.palette.to_owned() {
+    if let Some(palette) = reader_info.palette.clone() {
         encoder.set_palette(palette);
+    }
+
+    if let Some(trns_chunk) = reader_info.trns.clone() {
+        encoder.set_trns(trns_chunk);
     }
 
     let mut writer = encoder.write_header()?;
@@ -61,7 +71,7 @@ fn write_png(
             writer.write_text_chunk(chunk)?;
         }
     }
-    Ok(writer.write_image_data(&image)?)
+    Ok(writer.write_image_data(image)?)
 }
 
 fn create_png(path: &str, width: &str, height: &str, data: &str) -> Result<()> {
@@ -107,4 +117,22 @@ fn resize_png<P: AsRef<Path>>(
     let newimg = img.resize(width, height, resizetype);
 
     Ok(newimg.save_with_format(path.as_ref(), image::ImageFormat::Png)?)
+}
+
+/// Output is a JSON string for reading within BYOND
+///
+/// Erroring at any point will produce an empty string
+fn read_states(path: &str) -> Result<String> {
+    let reader = BufReader::new(File::open(path)?);
+    let icon = Icon::load(reader).ok();
+    if icon.is_none() {
+        return Err(Error::InvalidPngData);
+    }
+    let states: Vec<_> = icon
+        .unwrap()
+        .states
+        .iter()
+        .map(|s| s.name.clone())
+        .collect();
+    Ok(serde_json::to_string(&states)?)
 }
