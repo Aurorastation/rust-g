@@ -77,6 +77,9 @@ cargo build --release --target i686-unknown-linux-gnu
 
 Windows:
 
+If you are using Visual Studio Code, you may use the `CONTROL + SHIFT + B` hotkey and run the `rust: cargo build (win32)` task.
+
+Alternatively:
 ```sh
 cargo build --release --target i686-pc-windows-msvc
 # output: target/i686-pc-windows-msvc/release/rust_g.dll
@@ -94,23 +97,29 @@ The default features are:
   Mostly used by the asset cache subsystem to improve load times.
 * file: Faster replacements for `file2text` and `text2file`, as well as reading or checking if files exist.
 * git: Functions for robustly checking the current git revision.
+* hash: Faster replacement for `md5`, support for SHA-1, SHA-256, and SHA-512.
 * http: Asynchronous HTTP(s) client supporting most standard methods.
+* iconforge: A much faster replacement for various bulk DM /icon operations such as [/tg/station]'s asset subsystem spritesheet generation and GAGS bundle generation.
 * json: Function to check JSON validity.
 * log: Faster log output.
 * noise: 2d Perlin noise.
+* pathfinder: An a* pathfinder used for finding the shortest path in a static node map. Not to be used for a non-static map.
+* sound_len: A mostly codec-agnostic library for reading the duration of an audio file.
 * sql: Asynchronous MySQL/MariaDB client library.
+  * There are also two sub-features: `native_tls` and `rustls_tls`. `rustls_tls` is a default feature, while the former is not.
 * time: High-accuracy time measuring.
 * toml: TOML parser.
 * url: Faster replacements for `url_encode` and `url_decode`.
 
 Additional features are:
+* allow_non_32bit: Disables the forced compile errors on non-32bit targets. Only use this if you know exactly what you are doing.
 * batchnoise: Discrete Batched Perlin-like Noise, fast and multi-threaded - sent over once instead of having to query for every tile.
-* hash: Faster replacement for `md5`, support for SHA-1, SHA-256, and SHA-512. Requires OpenSSL on Linux.
-* pathfinder: An a* pathfinder used for finding the shortest path in a static node map. Not to be used for a non-static map.
+* dice: Advanced replacement for `roll`, supporting expressive xdy dice notation.
+* poissonnoise: A way to generate a 2D poisson disk distribution ('blue noise'), which is relatively uniform.
 * redis_pubsub: Library for sending and receiving messages through Redis.
 * redis_reliablequeue: Library for using a reliable queue pattern through Redis.
 * unzip: Function to download a .zip from a URL and unzip it to a directory.
-* worleynoise: Function that generates a type of nice looking cellular noise, more expensive than cellularnoise
+* worleynoise: Function that generates a type of nice looking cellular noise, more expensive than cellularnoise.
 
 Regarding rust-analyzer: If you are using a feature set other than the default, you will need to adjust `rust-analyzer.cargo.features`.
 
@@ -179,6 +188,8 @@ open("rust_g", O_RDONLY|O_CLOEXEC)      = 4
 open("rust_g", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = -1 ENOTDIR (Not a directory)
 ```
 
+---
+
 If you're still having problems, ask in the [Coderbus Discord]'s
 `#tooling-questions` channel.
 
@@ -186,7 +197,7 @@ If you're still having problems, ask in the [Coderbus Discord]'s
 [Rust]: https://rust-lang.org
 [Cargo]: https://doc.rust-lang.org/cargo/
 [rustup]: https://rustup.rs/
-[msvc]: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15
+[msvc]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [Coderbus Discord]: https://discord.gg/Vh8TJp9
 
 ## License
